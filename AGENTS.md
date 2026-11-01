@@ -1,8 +1,8 @@
 # Working on Arandu Signature
 
-This is an Arandu package: one entity with an embedded Hesape Model, one policy
-that decides about it, one service that owns the database handle, and the routes
-that reach them.
+This is an Arandu package with no table, no route and no state: the signature
+HYZIS puts on the products it develops, a line for a Kyse layout and, in
+`native/`, a widget and an About screen for an Ayra app.
 It is a Go module somebody `go get`s and registers by hand in their own
 `bootstrap/app.go`, which is the whole difference from working in an
 application. There is no service provider, no container and no discovery — if a

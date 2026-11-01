@@ -1,21 +1,23 @@
 # What this package declares about itself.
 #
-# The declaration is capability, not intent, and `aru doctor` compares it with
-# what the code imports and calls. A package that says it makes no outbound
-# calls and then holds an HTTP client is rejected, which is what makes the
-# four lines below worth reading before installing anything.
+# The declaration is capability, not intent: the package's own suite compares
+# it with what the code calls, because `aru doctor` reads the application and
+# never opens an installed package.
 
 name = "hyz-is/signature"
 framework = ">= 0.66"
 profiles = ["conventional", "performance"]
 
 [permissions]
-# It answers requests and reads its own rows. Nothing leaves the process.
+# It renders a line and serves three embedded assets. Nothing leaves the
+# process.
 network = false
-# It keeps no state outside the database.
+# It keeps no state at all.
 filesystem = false
-# It runs no other program.
-exec = false
-# module.go owns the signatures table, so whoever installs this has to run
-# `aru migrate`. Declaring it is how they find that out before deploying.
-migrations = true
+# On a desktop build of an Ayra app, native.OpenURL hands an address to the
+# operating system's opener (open, xdg-open, rundll32). Nothing else runs
+# another program, and neither the web half nor the Android, iOS or browser
+# builds do.
+exec = true
+# It owns no table.
+migrations = false

@@ -1,233 +1,92 @@
-<p align="center">
-  <img src=".github/logo.svg" alt="Arandu" width="180">
-</p>
-
 # Arandu Signature
 
-An Arandu package. It registers its own routes, owns its own table, and decides
-for itself who may reach either.
+The line HYZIS signs the products it develops with, under the brand
+partnership: **"Desenvolvido por [HYZIS] em [Arandu]"**, each mark a link to its
+site (https://hyz.is, https://arandu.io), drawn in the ink of the screen around
+it. One module for both halves of an [Arandu](https://arandu.io) product:
 
-## Install
+- `github.com/hyz-is/arandu-signature` — the web half, a line for a
+  [Kyse](https://github.com/arandu-io/kyse) layout;
+- `github.com/hyz-is/arandu-signature/native` — the native half, for an
+  [Ayra](https://github.com/arandu-io/ayra) app: the line and the About screen
+  it belongs on, with the marks opening the phone's browser.
 
-```bash
-go get github.com/hyz-is/arandu-signature
+The signature appears only when the client's contract allows it: `Enabled` is
+zero by default, and a project that does not sign renders nothing at all.
+
+```sh
+go get github.com/hyz-is/arandu-signature@latest
 ```
 
-## Wire it
+## Where it goes
 
-An Arandu application registers a module explicitly. There is no service
-provider, no container and no discovery, so these are the lines to paste into
-`bootstrap/app.go` and there are no others.
+- **Web:** one line in the footer of the public layout. Not in the panel's
+  chrome, the sign-in form or a transactional screen.
+- **Native app:** on an About screen ("Sobre", reached from the account screen),
+  never next to signing out.
 
-The import, with the other module imports:
+## Web: a Kyse layout
+
+Build the module in `bootstrap/app.go`, with the contract in the project's
+configuration, and register it with the others:
 
 ```go
-import (
-	signature "github.com/hyz-is/arandu-signature"
-)
+sig, err := signature.New(signature.Config{Enabled: cfg.App.SignatureEnabled})
+if err != nil {
+	return err
+}
+k.Register(sig)
 ```
 
-The construction, in `Build`, after the session store exists and before
-`k.Register`:
+Then draw the line where the footer ends, in the layout:
 
 ```go
-	signatureModule, err := signature.New(signature.Config{}, db, sessions)
-	if err != nil {
-		return App{}, err
-	}
+{!! signature.Kyse(signature.Props{Enabled: true, Class: "footer-signature"}) !!}
 ```
 
-And the registration, inside the `k.Register(...)` call already there:
+or hand the module's `sig.HTML()` to the layout's data. The line brings its own
+stylesheet and the two marks as view assets served from the origin, so the
+layout adds nothing else and a strict Content-Security-Policy holds: no inline
+style, no script. `Lang: signature.English` reads "Built by … with …";
+`HyzisURL` and `AranduURL` take another https address.
+
+## Native: an Ayra app
 
 ```go
-		signatureModule,
+import sig "github.com/hyz-is/arandu-signature/native"
+
+var about sig.State
+
+func layoutAbout(c ayra.Context) ayra.Dimensions {
+	return sig.About(c, &about, sig.AboutProps{
+		Mark: brandmark, Name: "Nivela", Version: "0.1.3",
+		Description: "Acompanhe orçamentos, visitas e o histórico de cada serviço.",
+		Signature:   sig.Options{Enabled: true},
+	})
+}
 ```
 
-Then, once, before the application serves:
+`sig.Line(c, &state, sig.Options{Enabled: true})` draws the line alone. Each
+mark is a target of at least 40 dp; a tap calls `sig.OpenURL`, which opens the
+system browser: an `ACTION_VIEW` intent on Android, a new tab on the browser
+build (js/wasm), the desktop's opener on macOS, Windows and Linux. On iOS it
+does nothing yet (Ayra exposes no handle to `openURL`), and the marks stay a
+visible credit there.
 
-```bash
-aru migrate
-```
+The native half targets Ayra v0.2.0 and imports nothing from the web half.
 
-This package owns a table, which is why the migration step is not optional and
-why `arandu.mod.toml` says `migrations = true`.
+## Gates
 
-## Publish the views
-
-This package carries the markup of its own pages and hands it over instead of
-rendering it from the inside, because a page you cannot edit is a page that says
-the wrong thing in your product.
-
-Look at what would be written, then write it:
-
-```bash
-aru vendor:publish --tag=view
-aru vendor:publish --tag=view --apply
-```
-
-Nothing is written without `--apply`. The preview lists every file as `create`,
-`update`, `unchanged` or `conflict`, and running the command a second time
-writes nothing. A file changed outside its `arandu:begin custom` markers is
-reported as a conflict and left alone; `--force` publishes over one, and even
-then what is inside the markers is carried forward.
-
-The files land under `resources/views/modules/signature/`, and from that point
-they are yours. Nothing of this package is compiled beside them, so no view name
-is registered twice and no rule has to decide which of two files won — the
-consequence being that a view of this package that changes later does not reach
-a project that already published it.
-
-Two steps are left to you, and they are left to you because a command that
-edited `bootstrap/app.go` behind your back is a command whose output nobody can
-explain. Compile what was written:
-
-```bash
-aru view:build
-```
-
-and import the directory it wrote into, with the other imports:
-
-```go
-	_ "your/module/path/storage/framework/views/modules/signature"
-```
-
-Without that import the views are not in the binary, and the module refuses to
-boot rather than answering the first request that reaches one of them with a
-500. The refusal names the view, the command and the import.
-
-## Configuration
-
-| field | required | meaning |
-| --- | --- | --- |
-| `Prefix` | no | where the routes are mounted. Defaults to `/signature`. |
-| `PageSize` | no | how many records one page answers with. Defaults to 25, refused above 200. |
-
-The zero `Config{}` is a valid configuration. There is no tenant to set: every
-route needs a session, and the tenant of every statement is the one on the
-Grant of whoever is signed in.
-
-`New` returns an error rather than starting half-wired, so a setting that
-cannot work fails where it is written instead of on the first request that
-needed it.
-
-## Routes
-
-| method | path | name |
-| --- | --- | --- |
-| `GET` | `/signature` | `signature.index` |
-| `GET` | `/signature/{id}` | `signature.show` |
-| `POST` | `/signature` | `signature.store` |
-
-Every one of them sits behind `RequireAuth`: a visitor with no session is sent
-to `/auth/login`, and the handler of a request that has one reads who is asking
-with `ctx.User()`. Behind the guard, every route is refused until the policy is
-opened. That is the state the package ships in, and it is deliberate.
-
-A handler returns the error the service returned, and the router answers it: a
-policy refusal is 403, a record that is not there is 404, and a rejected input
-goes back where it came from with the messages in the flash. A request that asks
-for JSON gets the same statuses as `application/problem+json` documents, and a
-rejected input as a 422 with the messages keyed by field. No handler maps an
-error to a status itself.
-
-## Open the policy
-
-`policy.go` denies every action and has no branch that allows one. Open what
-this package needs, one action at a time, inside the custom block:
-
-```go
-	// arandu:begin custom
-	if a == SignatureView && (s.ID == record.ID || s.HasRole("admin")) {
-		return nil
-	}
-	// arandu:end custom
-```
-
-What is not written there stays closed, including every action added later.
-
-## The data path
-
-`Signature` embeds `model.Model`, and `signatureTable`, beside it in `model.go`,
-declares its table once. `aru model:build` generates `SignatureQuery.go` from
-it: `Signatures(db)`, which starts a `*SignatureQuery`, and `SignatureCollection`.
-The file is committed and never edited by hand; regenerate it after changing
-the entity, and `aru model:build --check` fails when it is out of date.
-
-`SignatureService` owns `*data.DB` and follows
-`validate -> security.Authorize -> Grant -> Model terminal`; handlers never hold
-the database or start a query. Every query starts at `Signatures(s.db)`: the
-constructor returns one mutable query, so a second chain begun from a value held
-in a variable would carry the clauses of the first.
-
-Create builds the row with `Signatures(s.db).New()` and writes `TenantID` from
-`data.Tenant(g)`. Find authorizes before reading and again against the row it
-found. List authorizes before building its scoped, allowlisted query. The table
-keeps its default `tenant_id` scope on every terminal.
-
-Terminals return `*Signature` and `[]*Signature`. Keep those pointers: a copy of a
-row keeps the model of the original, and the model refuses to write through it
-with `model.ErrUnwired`. `Resource` and `Collection` are explicit response
-snapshots and do not expose tenant or Model internals.
-
-The rules of the entity itself — an invariant, a derived value, a transition
-such as `Rename` guarded by `CanRename` — go in the custom block of `model.go`,
-as pure methods: no database, no network, no clock read inside, no Grant. The
-service orchestrates: it validates, authorizes, calls those rules and saves
-with the Grant.
-
-There is no CRUD Repository. Add one only for a complex query, read model,
-report, export or raw SQL contract that the generated query cannot express.
-
-## Layout
-
-```
-module.go         registration, routes, handlers and migrations
-config.go         what the application passes in
-model.go          the entity, its table and its own rules, and what it may answer with
-SignatureQuery.go  the query aru model:build generates from model.go
-policy.go         who may do what
-service.go        the use cases, and Model access after authorization
-views.go          the files the application takes ownership of
-```
-
-## What is already correct, and has to stay that way
-
-**The policy denies everything.** There is no permit-all branch to delete
-later. The Service calls `security.Authorize` before its first `Signatures(db)`
-reach, and every Model terminal requires the Grant that call produced.
-
-**Authorization precedes the Model.** The package audit checks that order in
-every exported Service method. A Model terminal enforces tenant scope; the
-preceding Policy call decides whether the action itself is allowed.
-
-**The tenant comes from `data.Tenant(g)`.** Never from the path, the body, the
-query string or a header. The value on the Grant came from the session; a value
-that arrived with the request is a value the caller chose.
-
-**Who is asking comes from the guard.** `RequireAuth` loads the session once and
-puts the subject on the request; nothing in the module loads it again.
-
-**`arandu.mod.toml` declares what the package does** — network, filesystem,
-exec, migrations — and the suite compares the declaration against what the code
-*calls*, not against what it imports: `net/http` is imported by everything with
-a route and says nothing. A package that says it makes no outbound calls and
-then opens one fails its own tests, and that is the only place the comparison
-happens. `aru doctor` audits the application it is run inside and never loads a
-dependency, so nothing audits an installed package except the package itself.
-
-## Tests
-
-```bash
+```sh
+export GOWORK=off
+gofmt -l .
+go build ./...
+go vet ./...
+GOOS=js GOARCH=wasm go vet ./native/
 go test -race ./...
 ```
 
-The denial suite constructs the Service with a nil database, so even building
-`Signatures(nil)` would panic. The structural twin reads the allowed path and
-rejects any Service method that reaches the Model before `Authorize`, and any
-handler that loads the session or picks a status itself. The route tests drive
-the module with no session, with a signed-in subject and with a rejected input,
-on that same handle over no database.
+## License
 
-## Licence
-
-MIT. See [LICENSE.md](LICENSE.md). Copyright HYZIS.
+MIT. See [LICENSE.md](LICENSE.md). The HYZIS and Arandu marks are the brands of
+their owners and are shipped for the signature only.
