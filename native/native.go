@@ -19,6 +19,7 @@ import (
 	"image/draw"
 	"image/png"
 	"sync"
+	"time"
 
 	"github.com/arandu-io/ayra"
 	"github.com/arandu-io/ayra/engine/f32"
@@ -28,6 +29,8 @@ import (
 	"github.com/arandu-io/ayra/engine/unit"
 	ewidget "github.com/arandu-io/ayra/engine/widget"
 	"github.com/arandu-io/ayra/widget"
+
+	"github.com/hyz-is/arandu-signature/internal/licence"
 )
 
 // The official marks, rasterized at 96 px tall with a transparent background
@@ -57,6 +60,24 @@ type Options struct {
 	// default address of each.
 	HyzisURL  string
 	AranduURL string
+
+	// License is the partnership licence HYZIS issued for the project, kept
+	// as a constant in the app's source. A valid one draws the line always:
+	// Enabled is ignored. An invalid or expired one is ignored.
+	License string
+	// Host is the server the app talks to, whose host the licence has to
+	// name. Empty checks the signature and the expiry only.
+	Host string
+}
+
+// signs reports whether the line is drawn: a valid licence, or Enabled.
+func (o Options) signs() bool {
+	if o.License != "" {
+		if _, err := licence.Verify(o.License, publicKey, hostOf(o.Host), time.Now()); err == nil {
+			return true
+		}
+	}
+	return o.Enabled
 }
 
 func (o Options) words() (by, with string) {
@@ -85,7 +106,7 @@ type State struct {
 // Line draws the signature and opens a mark's site when it is tapped. A mark
 // is a target at least 40 dp square around a figure as tall as the text.
 func Line(c ayra.Context, s *State, o Options) ayra.Dimensions {
-	if !o.Enabled {
+	if !o.signs() {
 		return ayra.Dimensions{}
 	}
 	hyzisURL, aranduURL := o.urls()
