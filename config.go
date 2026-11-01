@@ -34,6 +34,20 @@ type Config struct {
 	// https address.
 	HyzisURL  string
 	AranduURL string
+
+	// License is the partnership licence HYZIS issued for this project. With
+	// a valid one for AppURL's host, the signature is always on: Enabled is
+	// ignored, and Middleware puts the line back on any page that lost it.
+	//
+	// Keep it a Go constant in bootstrap/app.go rather than an environment
+	// variable: removing it is then a change to the source, reviewed and
+	// recorded in the repository like any other, not a setting flipped on a
+	// server. An invalid or expired licence is logged and ignored; it never
+	// stops the application.
+	License string
+	// AppURL is the address the application is served at (APP_URL), whose
+	// host the licence has to name.
+	AppURL string
 }
 
 // Validate refuses a configuration that would render a broken or unsafe link.
