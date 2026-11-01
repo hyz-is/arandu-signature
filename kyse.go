@@ -52,8 +52,10 @@ p.arandu-signature[data-arandu-signature] > span:not(.arandu-signature-mark) { d
 p.arandu-signature[data-arandu-signature] a { display: inline-flex !important; align-items: center; min-height: 24px !important; min-width: 24px !important; justify-content: center; color: color-mix(in oklch, currentColor 75%%, transparent); text-decoration: none; pointer-events: auto !important; }
 p.arandu-signature[data-arandu-signature] a:hover, p.arandu-signature[data-arandu-signature] a:focus-visible { color: currentColor; }
 p.arandu-signature[data-arandu-signature] .arandu-signature-mark { display: block !important; background-color: currentColor !important; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat; -webkit-mask-position: center; mask-position: center; -webkit-mask-size: contain; mask-size: contain; }
-p.arandu-signature[data-arandu-signature] .arandu-signature-hyzis { height: 1.4em !important; min-height: 16px !important; aspect-ratio: 1876 / 2168; -webkit-mask-image: url("%[1]s") !important; mask-image: url("%[1]s") !important; }
-p.arandu-signature[data-arandu-signature] .arandu-signature-arandu { height: 1.15em !important; min-height: 13px !important; aspect-ratio: 292 / 260; -webkit-mask-image: url("%[2]s") !important; mask-image: url("%[2]s") !important; }
+p.arandu-signature[data-arandu-signature] .arandu-signature-hyzis { height: calc(1.4em * var(--arandu-signature-scale, 1)) !important; min-height: calc(16px * var(--arandu-signature-scale, 1)) !important; aspect-ratio: 1876 / 2168; -webkit-mask-image: url("%[1]s") !important; mask-image: url("%[1]s") !important; }
+p.arandu-signature[data-arandu-signature] .arandu-signature-arandu { height: calc(1.15em * var(--arandu-signature-scale, 1)) !important; min-height: calc(13px * var(--arandu-signature-scale, 1)) !important; aspect-ratio: 292 / 260; -webkit-mask-image: url("%[2]s") !important; mask-image: url("%[2]s") !important; }
+p.arandu-signature-small[data-arandu-signature] { --arandu-signature-scale: 0.85; }
+p.arandu-signature-large[data-arandu-signature] { --arandu-signature-scale: 1.3; }
 div.arandu-signature-restored[data-arandu-signature-restored] { display: flex !important; justify-content: center !important; padding: 1.25rem 1rem !important; visibility: visible !important; opacity: 1 !important; position: static !important; }
 `, hyzis, arandu))
 }
@@ -71,11 +73,37 @@ type Props struct {
 	AranduURL string
 	// Class is added to the line's element, for the layout's own placement.
 	Class string
+	// Size is the marks' height beside the text: SizeDefault (1.4em and
+	// 1.15em), SizeSmall or SizeLarge. A layout that wants another scale sets
+	// the custom property --arandu-signature-scale on the line from its own
+	// stylesheet.
+	Size string
+	// HeadStylesheet says the layout already links Stylesheet() in its
+	// <head>, so the line does not carry its own <link> into the body.
+	HeadStylesheet bool
+}
+
+// The sizes of the marks beside the text.
+const (
+	SizeDefault = ""
+	SizeSmall   = "small"
+	SizeLarge   = "large"
+)
+
+// Stylesheet is the <link> to the line's stylesheet, for a layout's <head>:
+//
+//	{!! signature.Stylesheet() !!}
+//
+// With it there, the line is drawn with Props.HeadStylesheet and the page
+// loads the style before the body, as a stylesheet belongs. It is served from
+// the origin, so a strict Content-Security-Policy holds.
+func Stylesheet() template.HTML {
+	return template.HTML(`<link rel="stylesheet" href="` + template.HTMLEscapeString(view.Asset(StylesheetAsset)) + `">`)
 }
 
 var line = template.Must(template.New("signature").Parse(
-	`<link rel="stylesheet" href="{{.Stylesheet}}">` +
-		`<p class="arandu-signature{{if .Class}} {{.Class}}{{end}}" data-arandu-signature lang="{{.Lang}}">` +
+	`{{if .Stylesheet}}<link rel="stylesheet" href="{{.Stylesheet}}">{{end}}` +
+		`<p class="arandu-signature{{if .Size}} arandu-signature-{{.Size}}{{end}}{{if .Class}} {{.Class}}{{end}}" data-arandu-signature lang="{{.Lang}}">` +
 		`<span>{{.By}}</span>` +
 		`<a href="{{.HyzisURL}}" aria-label="HYZIS" rel="noopener"><span class="arandu-signature-mark arandu-signature-hyzis" aria-hidden="true"></span></a>` +
 		`<span>{{.With}}</span>` +
@@ -111,11 +139,18 @@ func Kyse(p Props) template.HTML {
 	if cfg.Validate() != nil {
 		return ""
 	}
+	if p.Size != SizeDefault && p.Size != SizeSmall && p.Size != SizeLarge {
+		p.Size = SizeDefault
+	}
 	cfg = cfg.withDefaults()
 	by, with := Words(cfg.Lang)
+	sheet := view.Asset(StylesheetAsset)
+	if p.HeadStylesheet {
+		sheet = ""
+	}
 	var b bytes.Buffer
 	_ = line.Execute(&b, struct {
-		Stylesheet, Class, Lang, By, With, HyzisURL, AranduURL string
-	}{view.Asset(StylesheetAsset), p.Class, cfg.Lang, by, with, cfg.HyzisURL, cfg.AranduURL})
+		Stylesheet, Class, Size, Lang, By, With, HyzisURL, AranduURL string
+	}{sheet, p.Class, p.Size, cfg.Lang, by, with, cfg.HyzisURL, cfg.AranduURL})
 	return template.HTML(b.String())
 }

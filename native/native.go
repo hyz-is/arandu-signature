@@ -18,6 +18,7 @@ import (
 	"image/color"
 	"image/draw"
 	"image/png"
+	"strings"
 	"sync"
 	"time"
 
@@ -68,6 +69,20 @@ type Options struct {
 	// Host is the server the app talks to, whose host the licence has to
 	// name. Empty checks the signature and the expiry only.
 	Host string
+
+	// Height is the HYZIS mark's height; the Arandu mark keeps its
+	// proportion to it, 17 to 20. Zero is 20 dp. The target around each mark
+	// stays at least 40 dp square.
+	Height unit.Dp
+}
+
+// heights answers the two marks' heights.
+func (o Options) heights() (hyzis, arandu unit.Dp) {
+	h := o.Height
+	if h <= 0 {
+		h = 20
+	}
+	return h, h * 17 / 20
 }
 
 // signs reports whether the line is drawn: a valid licence, or Enabled.
@@ -118,6 +133,7 @@ func Line(c ayra.Context, s *State, o Options) ayra.Dimensions {
 	}
 
 	by, with := o.words()
+	hyzisHeight, aranduHeight := o.heights()
 	ink := c.Theme.Colours.Foreground
 	ink.A = 0xBF
 	words := func(text string) layout.FlexChild {
@@ -128,7 +144,7 @@ func Line(c ayra.Context, s *State, o Options) ayra.Dimensions {
 	mark := func(click *ewidget.Clickable, src []byte, height unit.Dp) layout.FlexChild {
 		return layout.Rigid(func(gtx layout.Context) layout.Dimensions {
 			return click.Layout(gtx, func(gtx layout.Context) layout.Dimensions {
-				side := gtx.Dp(40)
+				side := max(gtx.Dp(40), gtx.Dp(height)+gtx.Dp(8))
 				gtx.Constraints.Min = image.Pt(side, side)
 				return layout.Center.Layout(gtx, func(gtx layout.Context) layout.Dimensions {
 					return drawMark(gtx, src, ink, gtx.Dp(height))
@@ -138,25 +154,48 @@ func Line(c ayra.Context, s *State, o Options) ayra.Dimensions {
 	}
 	return layout.Flex{Alignment: layout.Middle}.Layout(c.Context,
 		words(by),
-		mark(&s.hyzis, hyzisPNG, 20),
+		mark(&s.hyzis, hyzisPNG, hyzisHeight),
 		words(with),
-		mark(&s.arandu, aranduPNG, 17),
+		mark(&s.arandu, aranduPNG, aranduHeight),
 	)
 }
 
 // AboutProps is the About screen of an app.
 type AboutProps struct {
+	// Back is the app's own way back, drawn first: its "Voltar" button or top
+	// bar. Nil draws none, for an app whose navigation draws it elsewhere.
+	Back ayra.Widget
+	// Eyebrow is the small line above the content, as the app's other screens
+	// title themselves ("Sobre o app"). Empty draws none.
+	Eyebrow string
 	// Mark draws the app's own mark and wordmark, which only the app knows.
 	Mark ayra.Widget
 	// Name, Version and Description are the app's: "Nivela", "0.1.2",
-	// one sentence about what it is for.
+	// one sentence about what it is for. Name is optional: leave it empty
+	// when Mark already carries the wordmark, so the name is not said twice.
 	Name, Version, Description string
-	// Signature is how the foot of the screen signs.
+	// Signature is how the screen signs.
 	Signature Options
+	// Placement is where the signature goes: AtFoot, the default, pushes it
+	// to the bottom of the screen; AfterContent puts it right after the
+	// description, centred.
+	Placement Placement
 }
 
-// About draws the About screen: the app's mark, its name and version, the
-// sentence about it, and the signature at the foot of the screen.
+// Placement is where the About screen puts the signature.
+type Placement int
+
+// The places the signature can take on the About screen.
+const (
+	// AtFoot is the bottom of the screen.
+	AtFoot Placement = iota
+	// AfterContent is right after the description, centred.
+	AfterContent
+)
+
+// About draws the About screen: the app's way back and eyebrow when it hands
+// them, its mark, name and version, the sentence about it, and the signature
+// at the foot of the screen or right after the content.
 func About(c ayra.Context, s *State, p AboutProps) ayra.Dimensions {
 	gap := func(dp unit.Dp) layout.FlexChild {
 		return layout.Rigid(layout.Spacer{Height: dp}.Layout)
@@ -165,6 +204,12 @@ func About(c ayra.Context, s *State, p AboutProps) ayra.Dimensions {
 		return layout.Rigid(func(gtx layout.Context) layout.Dimensions { return props.Layout(c.With(gtx)) })
 	}
 	children := []layout.FlexChild{}
+	if p.Back != nil {
+		children = append(children, layout.Rigid(func(gtx layout.Context) layout.Dimensions { return p.Back(c.With(gtx)) }), gap(8))
+	}
+	if p.Eyebrow != "" {
+		children = append(children, text(widget.TextProps{Content: strings.ToUpper(p.Eyebrow), Role: widget.Caption, Tone: widget.Muted, MaxLines: 1}), gap(12))
+	}
 	if p.Mark != nil {
 		children = append(children, layout.Rigid(func(gtx layout.Context) layout.Dimensions { return p.Mark(c.With(gtx)) }), gap(16))
 	}
@@ -181,14 +226,20 @@ func About(c ayra.Context, s *State, p AboutProps) ayra.Dimensions {
 	if p.Description != "" {
 		children = append(children, gap(12), text(widget.TextProps{Content: p.Description}))
 	}
-	children = append(children,
-		layout.Flexed(1, func(gtx layout.Context) layout.Dimensions {
-			return layout.Dimensions{Size: image.Pt(gtx.Constraints.Min.X, gtx.Constraints.Min.Y)}
-		}),
-		layout.Rigid(func(gtx layout.Context) layout.Dimensions {
-			return layout.Center.Layout(gtx, func(gtx layout.Context) layout.Dimensions { return Line(c.With(gtx), s, p.Signature) })
-		}),
-	)
+	signature := layout.Rigid(func(gtx layout.Context) layout.Dimensions {
+		gtx.Constraints.Min.X = gtx.Constraints.Max.X
+		return layout.Center.Layout(gtx, func(gtx layout.Context) layout.Dimensions { return Line(c.With(gtx), s, p.Signature) })
+	})
+	if p.Placement == AfterContent {
+		children = append(children, gap(32), signature)
+	} else {
+		children = append(children,
+			layout.Flexed(1, func(gtx layout.Context) layout.Dimensions {
+				return layout.Dimensions{Size: image.Pt(gtx.Constraints.Min.X, gtx.Constraints.Min.Y)}
+			}),
+			signature,
+		)
+	}
 	return layout.Flex{Axis: layout.Vertical}.Layout(c.Context, children...)
 }
 

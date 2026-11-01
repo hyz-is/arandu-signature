@@ -10,6 +10,23 @@ a release is corrected by another release and never by moving a tag.
 
 ## [Unreleased]
 
+## [0.2.1] - 2026-11-01
+
+### Added
+
+- `Stylesheet()`, the line's `<link>` for a layout's `<head>`, and
+  `Props.HeadStylesheet`, which draws the line without carrying its own link
+  into the body. On a licensed project the middleware puts the link back in
+  `<head>` when a page still signs but lost it.
+- `Props.Size` (`SizeSmall`, `SizeLarge`) and the `--arandu-signature-scale`
+  custom property for the marks' height on the web; `Options.Height` in the
+  native package, the Arandu mark keeping its 17-to-20 proportion.
+- `AboutProps.Back` and `AboutProps.Eyebrow`, for the app's own way back and
+  small title, and `AboutProps.Placement` (`AtFoot`, the default, or
+  `AfterContent`, centred right after the description). `Name` is optional
+  when `Mark` already carries the wordmark.
+- `OpenURL` opens the address through UIKit on iOS.
+
 ## [0.2.0] - 2026-11-01
 
 ### Added

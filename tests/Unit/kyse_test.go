@@ -115,3 +115,33 @@ func TestTheAssetsAreRegistered(t *testing.T) {
 		}
 	}
 }
+
+// A layout that links the stylesheet in its <head> draws the line without a
+// second <link> in the body, and Stylesheet is that head link.
+func TestTheStylesheetCanLiveInTheHead(t *testing.T) {
+	t.Parallel()
+
+	html := string(signature.Kyse(signature.Props{Enabled: true, HeadStylesheet: true}))
+	if strings.Contains(html, "<link") {
+		t.Fatalf("a line drawn for a head stylesheet still links one:\n%s", html)
+	}
+	head := string(signature.Stylesheet())
+	if !strings.Contains(head, `rel="stylesheet" href="`+view.Asset(signature.StylesheetAsset)+`"`) {
+		t.Fatalf("Stylesheet is %q", head)
+	}
+}
+
+// The marks' size is a class on the line, so no inline style is needed and an
+// unknown size falls back to the default.
+func TestTheMarksHaveASize(t *testing.T) {
+	t.Parallel()
+
+	small := string(signature.Kyse(signature.Props{Enabled: true, Size: signature.SizeSmall}))
+	if !strings.Contains(small, `class="arandu-signature arandu-signature-small"`) {
+		t.Errorf("the small line reads:\n%s", small)
+	}
+	odd := string(signature.Kyse(signature.Props{Enabled: true, Size: "huge"}))
+	if strings.Contains(odd, "arandu-signature-huge") || strings.Contains(odd, "style=") {
+		t.Errorf("an unknown size leaked into the markup:\n%s", odd)
+	}
+}

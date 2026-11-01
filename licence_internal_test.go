@@ -177,3 +177,16 @@ func TestTheStylesheetResistsHidingRules(t *testing.T) {
 		}
 	}
 }
+
+// A page that still signs but lost the stylesheet link its layout put in the
+// <head> gets the link back there, once.
+func TestThePageThatLostItsStylesheetGetsItBack(t *testing.T) {
+	page := `<html><head><title>x</title></head><body><p ` + Marker + `>line</p></body></html>`
+	out := string(insertBefore([]byte(page), "</head>", []byte(Stylesheet())))
+	if !strings.Contains(out, string(Stylesheet())+"</head>") {
+		t.Fatalf("the stylesheet did not go back into the head:\n%s", out)
+	}
+	if got := insertBefore([]byte("<p>no head</p>"), "</head>", []byte("x")); string(got) != "<p>no head</p>" {
+		t.Fatalf("a page without the tag changed: %s", got)
+	}
+}

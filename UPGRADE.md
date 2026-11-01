@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+## v0.2.1
+
+Nothing breaks: every new field defaults to v0.2.0's behaviour. To load the
+stylesheet in `<head>`, add `{!! signature.Stylesheet() !!}` to the layout's
+head and draw the line with `HeadStylesheet: true`.
+
 ## v0.2.0
 
 Nothing breaks: a project with no licence behaves as on v0.1.0. To make a

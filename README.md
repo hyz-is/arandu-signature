@@ -130,3 +130,17 @@ go test -race ./...
 
 MIT. See [LICENSE.md](LICENSE.md). The HYZIS and Arandu marks are the brands of
 their owners and are shipped for the signature only.
+
+## Since v0.2.1
+
+- **Stylesheet in the head.** Add `{!! signature.Stylesheet() !!}` to the
+  layout's `<head>` and draw the line with
+  `signature.Kyse(signature.Props{Enabled: true, HeadStylesheet: true})`.
+- **Mark size.** `Props.Size: signature.SizeSmall` or `SizeLarge` on the web,
+  or `--arandu-signature-scale` from the layout's own stylesheet;
+  `Options.Height` (dp) in an app.
+- **About screen.** `AboutProps.Back` and `AboutProps.Eyebrow` draw the app's
+  own top bar; `Placement: sig.AfterContent` centres the signature right after
+  the description instead of the foot; leave `Name` empty when `Mark` already
+  carries the wordmark.
+- **iOS.** `OpenURL` opens the address through UIKit.
