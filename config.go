@@ -2,97 +2,74 @@ package signature
 
 import (
 	"fmt"
-	"net/http"
+	"net/url"
 )
 
-// The defaults for the optional settings. They are constants rather than
-// literals inside Config.withDefaults, so the value a reader finds here is the
-// value the package uses.
+// The two addresses the marks link to.
 const (
-	// DefaultPrefix is where the routes are mounted when Config leaves Prefix
-	// empty.
-	DefaultPrefix = "/signature"
-	// DefaultPageSize is how many records one page answers with when Config
-	// leaves PageSize at zero.
-	DefaultPageSize = 25
-	// MaxPageSize is the ceiling PageSize is refused above. A page nobody
-	// bounded is a page that reads the whole table on the day the table is
-	// large.
-	MaxPageSize = 200
+	DefaultHyzisURL  = "https://hyz.is"
+	DefaultAranduURL = "https://arandu.io"
 )
 
-// Config is what the application passes when it wires this package.
+// The languages the words of the line come in.
+const (
+	// PortugueseBR reads "Desenvolvido por … em …", and is the default.
+	PortugueseBR = "pt-BR"
+	// English reads "Built by … with …".
+	English = "en"
+)
+
+// Config is how a project signs.
 //
-// A typed struct rather than a map: a misspelled key in a map is a setting that
-// silently keeps its default, and the failure shows up as behaviour nobody
-// asked for rather than as an error. Here a field that does not exist does not
-// compile.
-//
-// It names no tenant, and that is deliberate. Every route sits behind
-// RequireAuth, so the tenant of every statement is the one the Grant carries,
-// from the session of whoever is asking; a tenant written here would be a
-// second place for one to come from. The zero value is a valid configuration.
+// Enabled is the contract: the signature appears only on a product whose client
+// agreed to the brand partnership, and a project that has not says nothing,
+// so the line renders as nothing at all rather than as a hidden element.
 type Config struct {
-	// Prefix is the path the routes are mounted under. Empty means
-	// DefaultPrefix.
-	Prefix string
-
-	// PageSize is how many records one page answers with. Zero means
-	// DefaultPageSize, and anything above MaxPageSize is refused rather than
-	// clamped: a number somebody wrote and did not get is worse than a number
-	// somebody wrote and was told about.
-	PageSize int
+	// Enabled turns the signature on. Zero is off.
+	Enabled bool
+	// Lang is PortugueseBR or English. Empty is PortugueseBR.
+	Lang string
+	// HyzisURL and AranduURL are where the marks link to. Empty is the
+	// default address of each; a value is refused unless it is an absolute
+	// https address.
+	HyzisURL  string
+	AranduURL string
 }
 
-// Validate reports what the configuration cannot be used with.
-//
-// It is called by New, so an application with a setting that cannot work fails
-// where it is wired rather than on the first request that needed it.
+// Validate refuses a configuration that would render a broken or unsafe link.
 func (c Config) Validate() error {
-	if c.Prefix != "" && c.Prefix[0] != '/' {
-		return fmt.Errorf("signature: Config.Prefix is %q and has to start with /", c.Prefix)
+	if c.Lang != "" && c.Lang != PortugueseBR && c.Lang != English {
+		return fmt.Errorf("signature: Config.Lang is %q, and has to be %q or %q", c.Lang, PortugueseBR, English)
 	}
-	if c.Prefix != "" {
-		if err := validateRoutePrefix(c.Prefix); err != nil {
-			return err
+	for name, address := range map[string]string{"HyzisURL": c.HyzisURL, "AranduURL": c.AranduURL} {
+		if address == "" {
+			continue
 		}
-	}
-	if c.PageSize < 0 || c.PageSize > MaxPageSize {
-		return fmt.Errorf("signature: Config.PageSize is %d, and has to be between 0 and %d, where 0 means %d", c.PageSize, MaxPageSize, DefaultPageSize)
+		u, err := url.Parse(address)
+		if err != nil || u.Scheme != "https" || u.Host == "" {
+			return fmt.Errorf("signature: Config.%s is %q, and has to be an absolute https address", name, address)
+		}
 	}
 	return nil
 }
 
-// validateRoutePrefix asks the standard library to parse the exact patterns
-// the module will register. Its parser is not exported and reports invalid
-// patterns by panic, so the throwaway mux turns that boot-time panic into the
-// configuration error New promises.
-func validateRoutePrefix(prefix string) (err error) {
-	defer func() {
-		if recovered := recover(); recovered != nil {
-			err = fmt.Errorf("signature: Config.Prefix %q cannot be registered as a route path", prefix)
-		}
-	}()
-
-	handler := http.NotFoundHandler()
-	mux := http.NewServeMux()
-	mux.Handle(http.MethodGet+" "+prefix, handler)
-	mux.Handle(http.MethodGet+" "+prefix+"/{id}", handler)
-	mux.Handle(http.MethodPost+" "+prefix, handler)
-	return nil
-}
-
-// withDefaults returns the configuration with the optional fields filled in.
-//
-// It runs after Validate and never before: filling a default in first would
-// hide the value somebody actually wrote from the check that would have refused
-// it.
 func (c Config) withDefaults() Config {
-	if c.Prefix == "" {
-		c.Prefix = DefaultPrefix
+	if c.Lang == "" {
+		c.Lang = PortugueseBR
 	}
-	if c.PageSize == 0 {
-		c.PageSize = DefaultPageSize
+	if c.HyzisURL == "" {
+		c.HyzisURL = DefaultHyzisURL
+	}
+	if c.AranduURL == "" {
+		c.AranduURL = DefaultAranduURL
 	}
 	return c
+}
+
+// Words are the two pieces of text around the marks, in the language asked.
+func Words(lang string) (by, with string) {
+	if lang == English {
+		return "Built by", "with"
+	}
+	return "Desenvolvido por", "em"
 }
