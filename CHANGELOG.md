@@ -10,6 +10,26 @@ a release is corrected by another release and never by moving a tag.
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-11-01
+
+### Added
+
+- Partnership licences: `Config.License` and `Config.AppURL`, and
+  `Options.License` and `Options.Host` in the native package. A licence HYZIS
+  signs for the project's domain and term forces the signature on, ignoring
+  `Enabled`; an invalid or expired one is logged and ignored. `Verify` reads
+  one; `localhost` and loopback addresses match any licence.
+- `Module.Middleware()`: on a licensed project, puts the line back before
+  `</body>` on any whole HTML page that lacks its `data-arandu-signature`
+  marker.
+- `cmd/signature-license`: generates HYZIS's key (`-genkey`) and issues
+  licences.
+
+### Changed
+
+- The line carries the `data-arandu-signature` marker, and its stylesheet
+  keeps it visible against common hiding rules.
+
 ## [0.1.0] - 2026-11-01
 
 ### Added

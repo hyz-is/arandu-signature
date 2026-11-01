@@ -75,6 +75,46 @@ visible credit there.
 
 The native half targets Ayra v0.2.0 and imports nothing from the web half.
 
+## Partnership licence
+
+A project whose contract keeps the brand for a period gets a licence HYZIS
+signs (Ed25519) for its domain and its term. With a valid one, the signature
+is always on: `Enabled` is ignored, there is no option that hides it, and the
+boot log says `signature: partnership licence for <project> until <date>`.
+
+```go
+// bootstrap/app.go -- a constant in the source, not an environment variable:
+// removing it is a reviewed change to the repository, not a server setting.
+const signatureLicense = "eyJw…"
+
+sig, err := signature.New(signature.Config{License: signatureLicense, AppURL: cfg.App.URL})
+k.Register(sig)
+// with the application's middleware: puts the line back on a page that lost it
+m.Append(sig.Middleware())
+```
+
+`Middleware` reads only whole HTML pages (status 200, not htmx fragments, not
+compressed) and adds the line before `</body>` when the page lacks its marker.
+The stylesheet keeps the line visible against common hiding rules
+(`!important` on display, visibility, opacity, position, size, clip and
+transform). In an app, `sig.Options{License: …, Host: serverURL}` draws it
+always on the About screen. An invalid or expired licence is logged and
+ignored; it never stops the application. `localhost` and loopback addresses
+match any licence.
+
+This is friction, not a lock: the client owns the source, and a developer who
+deletes the constant, the middleware or the component removes the signature.
+What the licence changes is that removing it takes a deliberate edit to the
+code, recorded in the repository.
+
+HYZIS issues licences with the command in this module, using its private key
+(kept outside every repository):
+
+```sh
+go run github.com/hyz-is/arandu-signature/cmd/signature-license \
+  -key ~/.config/hyzis/signature-license.key -project <name> -domain <host> -years 10
+```
+
 ## Gates
 
 ```sh
