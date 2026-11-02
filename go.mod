@@ -4,8 +4,8 @@ go 1.26.10
 
 require (
 	github.com/arandu-io/ayra v0.9.1
-	github.com/arandu-io/framework v0.66.0
-	github.com/arandu-io/hesape v0.85.0
+	github.com/arandu-io/framework v0.67.0
+	github.com/arandu-io/hesape v0.88.0
 )
 
 require (
