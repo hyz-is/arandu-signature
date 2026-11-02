@@ -23,7 +23,9 @@ go get github.com/hyz-is/arandu-signature@latest
 - **Web:** one line in the footer of the public layout. Not in the panel's
   chrome, the sign-in form or a transactional screen.
 - **Native app:** on an About screen ("Sobre", reached from the account screen),
-  never next to signing out.
+  never next to signing out. Where the product is a showcase of HYZIS, the app
+  may also put the line at the foot of the sign-in screen: it is one widget,
+  `sig.LineProps{Enabled: true}.Layout`, that goes on any screen.
 
 ## Web: a Kyse layout
 
@@ -66,14 +68,35 @@ func layoutAbout(c ayra.Context) ayra.Dimensions {
 }
 ```
 
-`sig.Line(c, &state, sig.Options{Enabled: true})` draws the line alone. Each
-mark is a target of at least 40 dp; a tap calls `sig.OpenURL`, which opens the
+The line alone, on any screen, is `sig.LineProps` (the same fields as
+`sig.Options`) with the `Layout` every Ayra widget has. It is centred across the
+room it is given, in the ink of the screen around it, and takes no room when
+the project does not sign. At the foot of a sign-in screen:
+
+```go
+var signed sig.State
+
+func layoutLogin(c ayra.Context) ayra.Dimensions {
+	return layout.Flex{Axis: layout.Vertical}.Layout(c.Context,
+		layout.Flexed(1, func(gtx layout.Context) layout.Dimensions { return form(c.With(gtx)) }),
+		layout.Rigid(func(gtx layout.Context) layout.Dimensions {
+			return sig.LineProps{Enabled: true}.Layout(c.With(gtx), &signed)
+		}),
+	)
+}
+```
+
+One `sig.State` for each place the line is drawn. `sig.Line(c, &state,
+sig.Options{Enabled: true})` is the same line at its own width, not centred.
+Each mark answers a press within 44 dp (Ayra's `TouchArea`) although the figure
+is smaller, and is drawn on the pixels it covers, so its edges are sharp at any
+density, in both schemes. A tap calls `sig.OpenURL`, which opens the
 system browser: an `ACTION_VIEW` intent on Android, a new tab on the browser
 build (js/wasm), the desktop's opener on macOS, Windows and Linux. On iOS it
 does nothing yet (Ayra exposes no handle to `openURL`), and the marks stay a
 visible credit there.
 
-The native half targets Ayra v0.2.0 and imports nothing from the web half.
+The native half targets Ayra v0.9.1 and imports nothing from the web half.
 
 ## Partnership licence
 
@@ -130,6 +153,14 @@ go test -race ./...
 
 MIT. See [LICENSE.md](LICENSE.md). The HYZIS and Arandu marks are the brands of
 their owners and are shipped for the signature only.
+
+## Since v0.3.0
+
+- **The line on any screen.** `sig.LineProps{...}.Layout(c, &state)` draws the
+  signature centred across the room it is given; the sign-in screen's foot is
+  one place, About is another.
+- **Ayra v0.9.1.** Marks answer within 44 dp and are resampled to the pixels
+  they cover.
 
 ## Since v0.2.1
 
