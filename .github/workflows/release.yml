@@ -23,6 +23,18 @@ jobs:
         with:
           go-version: stable
 
+      # The native half is drawn by Ayra's engine, whose Linux build needs the
+      # system's window and graphics headers, and whose golden pictures need a
+      # software renderer on a virtual display.
+      - name: system libraries
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            libwayland-dev libx11-dev libx11-xcb-dev libxkbcommon-x11-dev \
+            libgles2-mesa-dev libegl1-mesa-dev libffi-dev libxcursor-dev \
+            libvulkan-dev wayland-protocols \
+            libegl-mesa0 libgl1-mesa-dri libglx-mesa0 x11-utils xvfb
+
       - name: Verify the exact tag archive
         env:
           TAG: ${{ github.ref_name }}
@@ -38,7 +50,7 @@ jobs:
           test -z "$unformatted" || { echo "$unformatted"; exit 1; }
           GOWORK=off go build ./...
           GOWORK=off go vet ./...
-          GOWORK=off go test -race -count=1 ./...
+          GOWORK=off xvfb-run -a go test -race -count=1 ./...
 
       - name: Audit known vulnerabilities
         run: |

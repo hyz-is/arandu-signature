@@ -25,6 +25,18 @@ jobs:
           # version people actually run, which is what CI should test against.
           go-version: stable
 
+      # The native half is drawn by Ayra's engine, whose Linux build needs the
+      # system's window and graphics headers, and whose golden pictures need a
+      # software renderer on a virtual display.
+      - name: system libraries
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            libwayland-dev libx11-dev libx11-xcb-dev libxkbcommon-x11-dev \
+            libgles2-mesa-dev libegl1-mesa-dev libffi-dev libxcursor-dev \
+            libvulkan-dev wayland-protocols \
+            libegl-mesa0 libgl1-mesa-dri libglx-mesa0 x11-utils xvfb
+
       - name: gofmt
         # Two filters, and neither is preference. gofmt is the only tool in the
         # chain that ignores build tags, so it reads files the compiler
@@ -46,7 +58,7 @@ jobs:
         run: go vet ./...
 
       - name: test
-        run: go test -race ./...
+        run: xvfb-run -a go test -race ./...
 
       # A v0 release may break, but every break must tell an installer exactly
       # what to replace. Module mode also sees a deleted package or type that a
