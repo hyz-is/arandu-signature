@@ -5,7 +5,7 @@
 # never opens an installed package.
 
 name = "hyz-is/signature"
-framework = ">= 0.66"
+framework = ">= 0.69"
 profiles = ["conventional", "performance"]
 
 [permissions]
