@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+Nothing to change. `Middleware` leaves a request alone when it carries
+`YPY-Request: true`, where it used to read the header of the old library, so a
+page fetched by the script is still not rewritten and a whole page still gets
+its line back.
+
 ## v0.3.0
 
 Nothing that compiled stops compiling. The native half now needs Ayra v0.9.1:

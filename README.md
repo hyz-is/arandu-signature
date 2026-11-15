@@ -116,7 +116,7 @@ k.Register(sig)
 m.Append(sig.Middleware())
 ```
 
-`Middleware` reads only whole HTML pages (status 200, not htmx fragments, not
+`Middleware` reads only whole HTML pages (status 200, not YPY fragments, not
 compressed) and adds the line before `</body>` when the page lacks its marker.
 The stylesheet keeps the line visible against common hiding rules
 (`!important` on display, visibility, opacity, position, size, clip and

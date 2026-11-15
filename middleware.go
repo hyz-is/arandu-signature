@@ -16,7 +16,7 @@ import (
 //	m.Append(sig.Middleware())
 //
 // It reads only what it may change: a whole HTML page (text/html, status 200,
-// not an htmx fragment, not already compressed). A page whose body carries the
+// not a YPY fragment, not already compressed). A page whose body carries the
 // line's Marker is left exactly as it was; one without it gets the line before
 // its closing </body>. A page that signs but no longer links the line's
 // stylesheet -- its layout drew the line with HeadStylesheet and the <head>
@@ -30,7 +30,7 @@ func (m *Module) Middleware() func(http.Handler) http.Handler {
 		block := []byte(`<div class="arandu-signature-restored" data-arandu-signature-restored>` + string(Kyse(m.props())) + `</div>`)
 		sheet := []byte(Stylesheet())
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			if r.Method != http.MethodGet || r.Header.Get("HX-Request") == "true" {
+			if r.Method != http.MethodGet || r.Header.Get("YPY-Request") == "true" {
 				next.ServeHTTP(w, r)
 				return
 			}

@@ -101,8 +101,8 @@ func serve(t *testing.T, m *Module, contentType, body string, header map[string]
 		_, _ = w.Write([]byte(body))
 	}))
 	r := httptest.NewRequest(http.MethodGet, "/", nil)
-	if header["HX-Request"] != "" {
-		r.Header.Set("HX-Request", header["HX-Request"])
+	if header["YPY-Request"] != "" {
+		r.Header.Set("YPY-Request", header["YPY-Request"])
 	}
 	w := httptest.NewRecorder()
 	handler.ServeHTTP(w, r)
@@ -148,7 +148,7 @@ func TestWhatIsNotAWholePageIsLeftAlone(t *testing.T) {
 		header map[string]string
 	}{
 		"json":       {"application/json", nil},
-		"htmx":       {"text/html", map[string]string{"HX-Request": "true"}},
+		"ypy":        {"text/html", map[string]string{"YPY-Request": "true"}},
 		"compressed": {"text/html", map[string]string{"Content-Encoding": "gzip"}},
 	} {
 		if got := serve(t, m, c.ct, page, c.header).Body.String(); got != page {
