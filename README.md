@@ -29,15 +29,26 @@ go get github.com/hyz-is/arandu-signature@latest
 
 ## Web: a Kyse layout
 
-Build the module in `bootstrap/app.go`, with the contract in the project's
-configuration, and register it with the others:
+Build the module in `App`, in `bootstrap/app.go`, once `NewAppServiceProvider`
+has returned, with the contract in the project's configuration. `Configure` has
+no way to return the error of `New`, so the module is built where the error can
+leave:
 
 ```go
 sig, err := signature.New(signature.Config{Enabled: cfg.App.SignatureEnabled})
 if err != nil {
-	return err
+	_ = drivers.Close()
+	return nil, err
 }
-k.Register(sig)
+```
+
+and list it in the `WithProviders(...)` chain the builder is made of:
+
+```go
+return Configure(cfg, drivers, app).
+	WithProviders(sig).
+	WithVersion(version, commit).
+	Create()
 ```
 
 Then draw the line where the footer ends, in the layout:
@@ -111,9 +122,19 @@ boot log says `signature: partnership licence for <project> until <date>`.
 const signatureLicense = "eyJw…"
 
 sig, err := signature.New(signature.Config{License: signatureLicense, AppURL: cfg.App.URL})
-k.Register(sig)
-// with the application's middleware: puts the line back on a page that lost it
-m.Append(sig.Middleware())
+if err != nil {
+	_ = drivers.Close()
+	return nil, err
+}
+
+return Configure(cfg, drivers, app).
+	WithProviders(sig).
+	WithMiddleware(func(m *foundation.Middleware) {
+		// puts the line back on a page that lost it
+		m.Append(sig.Middleware())
+	}).
+	WithVersion(version, commit).
+	Create()
 ```
 
 `Middleware` reads only whole HTML pages (status 200, not YPY fragments, not

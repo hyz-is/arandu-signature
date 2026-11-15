@@ -13,14 +13,22 @@ system browser.
 
 ## Installing it in an application
 
-Composition is explicit, in `bootstrap/app.go`:
+Composition is explicit, in `App` in `bootstrap/app.go`, once
+`NewAppServiceProvider` has returned. `Configure` has no way to return the error
+of `New`, so the module is built where the error can leave, and listed in the
+`WithProviders(...)` chain the builder is made of:
 
 ```go
 sig, err := signature.New(signature.Config{Enabled: contractAllowsIt})
 if err != nil {
-	return err
+	_ = drivers.Close()
+	return nil, err
 }
-k.Register(sig)
+
+return Configure(cfg, drivers, app).
+	WithProviders(sig).
+	WithVersion(version, commit).
+	Create()
 ```
 
 The layout draws `{!! signature.Kyse(signature.Props{Enabled: true}) !!}` in
