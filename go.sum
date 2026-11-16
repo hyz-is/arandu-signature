@@ -1,7 +1,7 @@
 eliasnaur.com/font v0.0.0-20230308162249-dd43949cb42d h1:ARo7NCVvN2NdhLlJE9xAbKweuI9L6UgfTbYb0YwPacY=
 eliasnaur.com/font v0.0.0-20230308162249-dd43949cb42d/go.mod h1:OYVuxibdk9OSLX8vAqydtRPP87PyTFcT9uH3MlEGBQA=
-github.com/arandu-io/ayra v0.9.1 h1:wwsUX2OU/TjyPkIAwnWN0z+FYvAu+PcoTAz6LH9L7aE=
-github.com/arandu-io/ayra v0.9.1/go.mod h1:Mi2HdKFjcVeM9Vg/4UPwpCkgfghOtQjUbtqG54Eu+M4=
+github.com/arandu-io/ayra v0.9.4 h1:rey5nMsf1c4pEBxMAnkdZx4ybyoFO+foFvEPczOQSuo=
+github.com/arandu-io/ayra v0.9.4/go.mod h1:Mi2HdKFjcVeM9Vg/4UPwpCkgfghOtQjUbtqG54Eu+M4=
 github.com/arandu-io/framework v0.71.0 h1:aXPqOV4dbcwfmdIr77JLXwPcX7KsanlFMp2y0qk29eM=
 github.com/arandu-io/framework v0.71.0/go.mod h1:kpvC59lOhrdus4WsLg7JiaZ6JqTbszKrhLPYNTKqYXI=
 github.com/arandu-io/hesape v0.109.0 h1:C48cBFs5SR7Iha7ushxVMmGGIAhcYQ/zdykReMVgjpg=
