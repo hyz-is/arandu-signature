@@ -2,10 +2,10 @@ eliasnaur.com/font v0.0.0-20230308162249-dd43949cb42d h1:ARo7NCVvN2NdhLlJE9xAbKw
 eliasnaur.com/font v0.0.0-20230308162249-dd43949cb42d/go.mod h1:OYVuxibdk9OSLX8vAqydtRPP87PyTFcT9uH3MlEGBQA=
 github.com/arandu-io/ayra v0.9.1 h1:wwsUX2OU/TjyPkIAwnWN0z+FYvAu+PcoTAz6LH9L7aE=
 github.com/arandu-io/ayra v0.9.1/go.mod h1:Mi2HdKFjcVeM9Vg/4UPwpCkgfghOtQjUbtqG54Eu+M4=
-github.com/arandu-io/framework v0.69.0 h1:lVmPVpX/KedXQzzQ7xTLqlA38WdNeI7DS2vo9NnGSx4=
-github.com/arandu-io/framework v0.69.0/go.mod h1:pL9VBLS/D9E31N065CnoJG8EHHy9aw+gFKrogGPg4u0=
-github.com/arandu-io/hesape v0.107.0 h1:WgIRNtH+9BgAPtxtg+mNCra80YMoD5XST6fNj+YG6vM=
-github.com/arandu-io/hesape v0.107.0/go.mod h1:wwVHND0vi2S1Fynb/47PPzKqzTmfAHNXZUMlbxNI2T4=
+github.com/arandu-io/framework v0.71.0 h1:aXPqOV4dbcwfmdIr77JLXwPcX7KsanlFMp2y0qk29eM=
+github.com/arandu-io/framework v0.71.0/go.mod h1:kpvC59lOhrdus4WsLg7JiaZ6JqTbszKrhLPYNTKqYXI=
+github.com/arandu-io/hesape v0.109.0 h1:C48cBFs5SR7Iha7ushxVMmGGIAhcYQ/zdykReMVgjpg=
+github.com/arandu-io/hesape v0.109.0/go.mod h1:wwVHND0vi2S1Fynb/47PPzKqzTmfAHNXZUMlbxNI2T4=
 github.com/arandu-io/hesape/filesystem/s3 v0.11.0 h1:rJOA7ToEX29IObYCaFaLLDWQwwPvY8jI380aVHMkUfc=
 github.com/arandu-io/hesape/filesystem/s3 v0.11.0/go.mod h1:8LjiOdirA+YYCnQIs50BmIulXYdJFLkSOXfap+3JRFk=
 github.com/go-text/typesetting v0.3.5 h1:XZPUooClHY0Vf/rFyUyuPRNEkawARaFzLMQcXLSEyPk=
