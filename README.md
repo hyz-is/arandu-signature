@@ -63,6 +63,50 @@ layout adds nothing else and a strict Content-Security-Policy holds: no inline
 style, no script. `Lang: signature.English` reads "Built by … with …";
 `HyzisURL` and `AranduURL` take another https address.
 
+## E-mail: a letter's foot
+
+A mail client draws no SVG and no CSS mask, so the line has its own form for a
+letter: a table in inline styles, with the two marks as PNGs of a fixed size
+that the site serves. `Origin` is the public address the images are fetched
+from, absolute because a letter is read outside the application.
+
+```go
+foot := signature.Email(signature.EmailProps{
+	Enabled: true,
+	Origin:  "https://example.com", // the site that serves the view assets
+	Font:    displayFont,           // single quotes only: it sits in a style attribute
+	Size:    12,
+})
+```
+
+and, in the same letter's `<style>`, the rules that go with it:
+
+```go
+css += signature.EmailStyle()
+```
+
+- **Light and dark.** Each mark is a PNG in the muted ink of a letter's foot
+  (`EmailInk`, `#525252`) and another in its light counterpart (`EmailInkDark`,
+  `#a3a3a3`); both pass 4.5:1 on the page and the card of either theme. The
+  stylesheet shows the dark one under `prefers-color-scheme: dark` and under
+  Outlook.com's `data-ogsc`. A client that drops the stylesheet keeps the light
+  letter, which is complete. Gmail, which inverts a light letter by itself and
+  leaves images alone, shows the light marks on its inverted card.
+- **Narrow screens.** Under 620 px the four cells (`Desenvolvido por`, HYZIS,
+  `em`, Arandu) stack, one under the other, centred.
+- **Fixed size.** HYZIS is 19x22 and Arandu 22x20 CSS pixels, written as
+  `width` and `height` attributes, from PNGs of three times the size; each
+  image carries its name as alternative text, inside a link to its site.
+- **Plain text.** `signature.EmailText(props)` is the line for the text part:
+  `Desenvolvido por HYZIS (https://hyz.is) em Arandu (https://arandu.io)`.
+- `Left: true` aligns the table with the text above it instead of centring it;
+  the `Lang`, `HyzisURL`, `AranduURL` and licence rules of the web line hold.
+
+The four images are view assets (`HyzisMailLightAsset` and its three siblings),
+so the address of each is `Origin + view.Asset(name)` and the application that
+imports the package serves them: no copy of the files, no second place for the
+hash to drift.
+
 ## Native: an Ayra app
 
 ```go

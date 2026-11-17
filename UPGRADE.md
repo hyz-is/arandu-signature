@@ -2,6 +2,18 @@
 
 ## Unreleased
 
+## v0.5.0
+
+Nothing to change; nothing that compiled stops compiling. To sign a letter's foot,
+draw `signature.Email(signature.EmailProps{Enabled: true, Origin: "https://your.site"})`
+in the layout and add `signature.EmailStyle()` to its `<style>`.
+
+## v0.4.1
+
+Nothing to change. The module requires hesape v0.109.0 and framework v0.71.0.
+
+## v0.4.0
+
 Nothing to change. `Middleware` leaves a request alone when it carries
 `YPY-Request: true`, where it used to read the header of the old library, so a
 page fetched by the script is still not rewritten and a whole page still gets

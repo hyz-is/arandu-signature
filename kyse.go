@@ -120,29 +120,13 @@ var line = template.Must(template.New("signature").Parse(
 // partnership licence always gets the line, with the licensed addresses and
 // language when the call names none.
 func Kyse(p Props) template.HTML {
-	if licensed := forced.Load(); licensed != nil {
-		p.Enabled = true
-		if p.Lang == "" {
-			p.Lang = licensed.Lang
-		}
-		if p.HyzisURL == "" {
-			p.HyzisURL = licensed.HyzisURL
-		}
-		if p.AranduURL == "" {
-			p.AranduURL = licensed.AranduURL
-		}
-	}
-	if !p.Enabled {
-		return ""
-	}
-	cfg := Config{Enabled: true, Lang: p.Lang, HyzisURL: p.HyzisURL, AranduURL: p.AranduURL}
-	if cfg.Validate() != nil {
+	cfg, ok := resolve(p.Enabled, p.Lang, p.HyzisURL, p.AranduURL)
+	if !ok {
 		return ""
 	}
 	if p.Size != SizeDefault && p.Size != SizeSmall && p.Size != SizeLarge {
 		p.Size = SizeDefault
 	}
-	cfg = cfg.withDefaults()
 	by, with := Words(cfg.Lang)
 	sheet := view.Asset(StylesheetAsset)
 	if p.HeadStylesheet {

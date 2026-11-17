@@ -50,6 +50,19 @@ func TestALicensedProjectSignsEvenWhenItAsksNotTo(t *testing.T) {
 	}
 }
 
+func TestALicensedProjectSignsItsEmailsToo(t *testing.T) {
+	token := issue(t, valid("demo.example"))
+	if _, err := New(Config{Enabled: false, License: token, AppURL: "https://demo.example"}); err != nil {
+		t.Fatal(err)
+	}
+	if got := string(Email(EmailProps{Enabled: false, Origin: "https://demo.example"})); !strings.Contains(got, EmailMarker) {
+		t.Fatalf("an e-mail asking for no line drew nothing under a licence: %q", got)
+	}
+	if got := EmailText(EmailProps{}); !strings.Contains(got, "HYZIS") {
+		t.Fatalf("the text part drew nothing under a licence: %q", got)
+	}
+}
+
 func TestALicenceForAnotherHostIsIgnored(t *testing.T) {
 	token := issue(t, valid("demo.example"))
 	m, err := New(Config{Enabled: false, License: token, AppURL: "https://other.example"})

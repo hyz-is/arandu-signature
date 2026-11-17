@@ -32,7 +32,10 @@ return Configure(cfg, drivers, app).
 ```
 
 The layout draws `{!! signature.Kyse(signature.Props{Enabled: true}) !!}` in
-the public footer. An Ayra app calls `native.About` on its About screen, reached
+the public footer. A letter draws `signature.Email(signature.EmailProps{Enabled: true, Origin: ...})`
+in its foot, with `signature.EmailStyle()` in its `<style>` and
+`signature.EmailText(...)` in the text part: PNG marks the site serves, in
+inline styles, because a mail client draws no SVG and no mask. An Ayra app calls `native.About` on its About screen, reached
 from the account screen, never beside signing out.
 
 ## Rules

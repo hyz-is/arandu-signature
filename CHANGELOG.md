@@ -10,6 +10,44 @@ a release is corrected by another release and never by moving a tag.
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-11-17
+
+### Added
+
+- `Email(EmailProps)`, `EmailText(EmailProps)` and `EmailStyle()`: the line for
+  an e-mail's foot. A table in inline styles, "Desenvolvido por", the HYZIS
+  mark, "em" and the Arandu mark, each mark a link with alternative text and a
+  fixed size, fetched as a PNG from the site's own origin (`EmailProps.Origin`).
+  The stylesheet swaps the marks for their light counterparts in the dark theme
+  (`prefers-color-scheme` and Outlook.com's `data-ogsc`) and stacks the four
+  cells, centred, under 620 px. Off unless `Enabled` or licensed, as the web
+  line is.
+- Four view assets for it (`HyzisMailLightAsset`, `HyzisMailDarkAsset`,
+  `AranduMailLightAsset`, `AranduMailDarkAsset`): the two marks rendered from
+  the SVGs in the muted ink of a letter (`EmailInk`, `EmailInkDark`) at three
+  times the size they are drawn at.
+
+### Changed
+
+- `Kyse` and `Email` read the licence and validate the configuration in one
+  place. What `Kyse` draws does not change.
+
+## [0.4.1] - 2026-11-15
+
+### Changed
+
+- Requires hesape v0.109.0 and framework v0.71.0.
+
+## [0.4.0] - 2026-11-15
+
+### Changed
+
+- `Middleware` leaves a request alone when it carries `YPY-Request: true`, where
+  it used to read the header of the old library, so a page fetched by the script
+  is not rewritten and a whole page still gets its line back.
+- Requires the releases that carry YPY, and the README and the package skill
+  teach the wiring an application has today.
+
 ## [0.3.0] - 2026-11-02
 
 ### Added
