@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+## v0.5.2
+
+Nothing to change in code. Name the file that holds the licence
+`config/signature.go`, after the module, as the README now shows.
+
 ## v0.5.1
 
 Nothing to change in code. A project that keeps its licence elsewhere (in

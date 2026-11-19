@@ -166,7 +166,7 @@ variable: removing it is a reviewed change to the repository, not a server
 setting.
 
 ```go
-// config/partnership.go
+// config/signature.go
 package config
 
 // SignatureLicense is the partnership licence HYZIS signed for this project's

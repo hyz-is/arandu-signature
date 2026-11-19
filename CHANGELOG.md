@@ -10,6 +10,13 @@ a release is corrected by another release and never by moving a tag.
 
 ## [Unreleased]
 
+## [0.5.2] - 2026-11-19
+
+### Changed
+
+- The README names the licence's file after the module it configures,
+  `config/signature.go`, as every section of an application's `config/` is.
+
 ## [0.5.1] - 2026-11-19
 
 ### Fixed
