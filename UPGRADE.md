@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+## v0.5.1
+
+Nothing to change in code. A project that keeps its licence elsewhere (in
+`bootstrap/app.go` or a package of its own) may move the constant to
+`config/partnership.go`, as the README now shows. A licence signed with two
+`-domain` flags by v0.5.0 holds only the last host: sign it again.
+
 ## v0.5.0
 
 Nothing to change; nothing that compiled stops compiling. To sign a letter's foot,

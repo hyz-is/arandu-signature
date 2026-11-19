@@ -160,12 +160,25 @@ signs (Ed25519) for its domain and its term. With a valid one, the signature
 is always on: `Enabled` is ignored, there is no option that hides it, and the
 boot log says `signature: partnership licence for <project> until <date>`.
 
-```go
-// bootstrap/app.go -- a constant in the source, not an environment variable:
-// removing it is a reviewed change to the repository, not a server setting.
-const signatureLicense = "eyJw…"
+The licence is the project's configuration, so it lives in `config/`, in a
+file of its own, as a constant in the source rather than an environment
+variable: removing it is a reviewed change to the repository, not a server
+setting.
 
-sig, err := signature.New(signature.Config{License: signatureLicense, AppURL: cfg.App.URL})
+```go
+// config/partnership.go
+package config
+
+// SignatureLicense is the partnership licence HYZIS signed for this project's
+// domains and term.
+const SignatureLicense = "eyJw…"
+```
+
+`bootstrap/app.go` hands it to the module, and an app (`cmd/native`) reads the
+same constant for its About screen:
+
+```go
+sig, err := signature.New(signature.Config{License: config.SignatureLicense, AppURL: cfg.App.URL})
 if err != nil {
 	_ = drivers.Close()
 	return nil, err
@@ -200,7 +213,8 @@ HYZIS issues licences with the command in this module, using its private key
 
 ```sh
 go run github.com/hyz-is/arandu-signature/cmd/signature-license \
-  -key ~/.config/hyzis/signature-license.key -project <name> -domain <host> -years 10
+  -key ~/.config/hyzis/signature-license.key -project <name> \
+  -domain <host> -domain www.<host> -years <contract years>
 ```
 
 ## Gates

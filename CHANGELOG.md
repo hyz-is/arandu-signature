@@ -10,6 +10,20 @@ a release is corrected by another release and never by moving a tag.
 
 ## [Unreleased]
 
+## [0.5.1] - 2026-11-19
+
+### Fixed
+
+- `signature-license -domain` keeps every host when the flag is repeated. It
+  was a plain string flag, so a second `-domain` replaced the first and the
+  licence missed the site's main host. Each value may still list hosts
+  separated by commas; hosts are lowercased and kept once.
+
+### Changed
+
+- The README places the licence constant in `config/partnership.go`, the
+  project's own configuration, instead of `bootstrap/app.go`.
+
 ## [0.5.0] - 2026-11-17
 
 ### Added

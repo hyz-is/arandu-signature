@@ -3,7 +3,10 @@
 //
 //	signature-license -genkey -key ~/.config/hyzis/signature-license.key
 //	signature-license -key ~/.config/hyzis/signature-license.key \
-//	    -project demo-douglas -domain demo-douglas.hyz.is -years 10
+//	    -project alug-plus -domain alug.plus -domain www.alug.plus -years 5
+//
+// -domain may be repeated, and each value may also list hosts separated by
+// commas: every host given is in the licence.
 //
 // -genkey writes a new Ed25519 private key, readable by its owner only, and
 // prints the public key to embed in the module. Without it, the command signs
@@ -32,11 +35,39 @@ func main() {
 	}
 }
 
+// hostList is the -domain flag: repeated, every value is kept, where a plain
+// string flag kept only the last one and signed a licence missing the others.
+type hostList []string
+
+func (h *hostList) String() string { return strings.Join(*h, ",") }
+
+// Set adds the hosts of one -domain value, lowercased, once each.
+func (h *hostList) Set(value string) error {
+	for _, d := range strings.Split(value, ",") {
+		d = strings.ToLower(strings.TrimSpace(d))
+		if d == "" {
+			continue
+		}
+		seen := false
+		for _, have := range *h {
+			if have == d {
+				seen = true
+				break
+			}
+		}
+		if !seen {
+			*h = append(*h, d)
+		}
+	}
+	return nil
+}
+
 func run() error {
 	genkey := flag.Bool("genkey", false, "write a new private key to -key and print its public key")
 	keyPath := flag.String("key", "", "the Ed25519 private key file")
 	project := flag.String("project", "", "the project the licence is for")
-	domains := flag.String("domain", "", "the hosts it is valid on, comma separated")
+	var domains hostList
+	flag.Var(&domains, "domain", "a host it is valid on; repeat it, or separate hosts with commas")
 	years := flag.Int("years", 10, "how many years it is valid for")
 	flag.Parse()
 
@@ -58,7 +89,7 @@ func run() error {
 		return nil
 	}
 
-	if *project == "" || *domains == "" || *years <= 0 {
+	if *project == "" || len(domains) == 0 || *years <= 0 {
 		return errors.New("-project, -domain and a positive -years are required")
 	}
 	raw, err := os.ReadFile(*keyPath)
@@ -69,12 +100,7 @@ func run() error {
 	if err != nil || len(seed) != ed25519.SeedSize {
 		return fmt.Errorf("%s is not a key this command wrote", *keyPath)
 	}
-	var hosts []string
-	for _, d := range strings.Split(*domains, ",") {
-		if d = strings.ToLower(strings.TrimSpace(d)); d != "" {
-			hosts = append(hosts, d)
-		}
-	}
+	hosts := []string(domains)
 	now := time.Now().UTC()
 	token, err := licence.Sign(licence.Claims{
 		Project: *project, Domains: hosts,
