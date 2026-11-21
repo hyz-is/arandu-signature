@@ -66,7 +66,9 @@ type EmailProps struct {
 	// Enabled is the contract, as in Props: zero renders nothing, unless the
 	// project holds a partnership licence.
 	Enabled bool
-	// Lang is PortugueseBR or English. Empty is PortugueseBR.
+	// Lang is the page's language tag: see [Language]. Empty is PortugueseBR
+	// and a language the line has no words for is English. Arabic draws the
+	// table right to left.
 	Lang string
 	// HyzisURL and AranduURL override where the marks link to; each has to be
 	// an absolute https address.
@@ -108,7 +110,7 @@ func resolve(enabled bool, lang, hyzisURL, aranduURL string) (Config, bool) {
 	if !enabled {
 		return Config{}, false
 	}
-	cfg := Config{Enabled: true, Lang: lang, HyzisURL: hyzisURL, AranduURL: aranduURL}
+	cfg := Config{Enabled: true, Lang: Language(lang), HyzisURL: hyzisURL, AranduURL: aranduURL}
 	if cfg.Validate() != nil {
 		return Config{}, false
 	}
@@ -130,8 +132,9 @@ func emailOrigin(origin string) (string, bool) {
 //
 //	{!! signature.Email(signature.EmailProps{Enabled: true, Origin: "https://example.com"}) !!}
 //
-// It is a table: "Desenvolvido por", the HYZIS mark, "em" and the Arandu mark
-// in one row, each mark a link with its name as alternative text, drawn at a
+// It is a table: "Desenvolvido por", the HYZIS mark, "com" and the Arandu mark
+// in one row (a language with a closing word, Japanese or Chinese, adds a
+// last cell for it), each mark a link with its name as alternative text, drawn at a
 // fixed size from a PNG served by the site. A letter's own stylesheet adds the
 // rest by including EmailStyle: the dark theme swaps each mark for its light
 // counterpart, and on a narrow screen the four cells stack, centred, one under
@@ -157,7 +160,7 @@ func Email(p EmailProps) template.HTML {
 	if size <= 0 {
 		size = 12
 	}
-	by, with := Words(cfg.Lang)
+	phrase := Sentence(cfg.Lang)
 	esc := template.HTMLEscapeString
 
 	align, margin := ` align="center"`, "0 auto"
@@ -178,12 +181,18 @@ func Email(p EmailProps) template.HTML {
 	}
 
 	var b strings.Builder
-	fmt.Fprintf(&b, `<table role="presentation"%s cellpadding="0" cellspacing="0" border="0" class="signature-mail" %s lang="%s" style="margin:%s;border-collapse:collapse"><tr>`,
-		align, EmailMarker, esc(cfg.Lang), margin)
-	b.WriteString(word(by))
+	fmt.Fprintf(&b, `<table role="presentation"%s cellpadding="0" cellspacing="0" border="0" class="signature-mail" %s lang="%s" dir="%s" style="margin:%s;border-collapse:collapse"><tr>`,
+		align, EmailMarker, esc(phrase.HTMLLang), phrase.Dir(), margin)
+	words := func(text string) {
+		if text != "" {
+			b.WriteString(word(text))
+		}
+	}
+	words(phrase.Before)
 	b.WriteString(mark("HYZIS", cfg.HyzisURL, HyzisMailLightAsset, HyzisMailDarkAsset, EmailHyzisWidth, EmailHyzisHeight))
-	b.WriteString(word(with))
+	words(phrase.Between)
 	b.WriteString(mark("Arandu", cfg.AranduURL, AranduMailLightAsset, AranduMailDarkAsset, EmailAranduWidth, EmailAranduHeight))
+	words(phrase.After)
 	b.WriteString(`</tr></table>`)
 	return template.HTML(b.String()) // #nosec G203 -- every value was escaped above
 }
@@ -195,8 +204,15 @@ func EmailText(p EmailProps) string {
 	if !ok {
 		return ""
 	}
-	by, with := Words(cfg.Lang)
-	return fmt.Sprintf("%s HYZIS (%s) %s Arandu (%s)", by, cfg.HyzisURL, with, cfg.AranduURL)
+	phrase := Sentence(cfg.Lang)
+	parts := []string{phrase.Before, "HYZIS (" + cfg.HyzisURL + ")", phrase.Between, "Arandu (" + cfg.AranduURL + ")", phrase.After}
+	kept := parts[:0]
+	for _, part := range parts {
+		if part != "" {
+			kept = append(kept, part)
+		}
+	}
+	return strings.Join(kept, " ")
 }
 
 // EmailStyle is the rules the e-mail line needs in the <style> of a letter's

@@ -65,7 +65,9 @@ type Props struct {
 	// Enabled is the contract. Zero renders nothing, unless the project holds
 	// a partnership licence: then the line is always drawn.
 	Enabled bool
-	// Lang is PortugueseBR or English. Empty is PortugueseBR.
+	// Lang is the page's language tag, "fr" or "pt-BR" or "ar-EG": see
+	// [Language]. Empty is PortugueseBR and a language the line has no words
+	// for is English. Arabic draws the line right to left.
 	Lang string
 	// HyzisURL and AranduURL override where the marks link to. Empty is the
 	// default address of each.
@@ -103,11 +105,12 @@ func Stylesheet() template.HTML {
 
 var line = template.Must(template.New("signature").Parse(
 	`{{if .Stylesheet}}<link rel="stylesheet" href="{{.Stylesheet}}">{{end}}` +
-		`<p class="arandu-signature{{if .Size}} arandu-signature-{{.Size}}{{end}}{{if .Class}} {{.Class}}{{end}}" data-arandu-signature lang="{{.Lang}}">` +
-		`<span>{{.By}}</span>` +
+		`<p class="arandu-signature{{if .Size}} arandu-signature-{{.Size}}{{end}}{{if .Class}} {{.Class}}{{end}}" data-arandu-signature lang="{{.Lang}}" dir="{{.Dir}}">` +
+		`{{if .By}}<span>{{.By}}</span>{{end}}` +
 		`<a href="{{.HyzisURL}}" aria-label="HYZIS" rel="noopener"><span class="arandu-signature-mark arandu-signature-hyzis" aria-hidden="true"></span></a>` +
-		`<span>{{.With}}</span>` +
+		`{{if .With}}<span>{{.With}}</span>{{end}}` +
 		`<a href="{{.AranduURL}}" aria-label="Arandu" rel="noopener"><span class="arandu-signature-mark arandu-signature-arandu" aria-hidden="true"></span></a>` +
+		`{{if .After}}<span>{{.After}}</span>{{end}}` +
 		`</p>`))
 
 // Kyse is the line as markup for a Kyse layout:
@@ -127,14 +130,14 @@ func Kyse(p Props) template.HTML {
 	if p.Size != SizeDefault && p.Size != SizeSmall && p.Size != SizeLarge {
 		p.Size = SizeDefault
 	}
-	by, with := Words(cfg.Lang)
+	phrase := Sentence(cfg.Lang)
 	sheet := view.Asset(StylesheetAsset)
 	if p.HeadStylesheet {
 		sheet = ""
 	}
 	var b bytes.Buffer
 	_ = line.Execute(&b, struct {
-		Stylesheet, Class, Size, Lang, By, With, HyzisURL, AranduURL string
-	}{sheet, p.Class, p.Size, cfg.Lang, by, with, cfg.HyzisURL, cfg.AranduURL})
+		Stylesheet, Class, Size, Lang, Dir, By, With, After, HyzisURL, AranduURL string
+	}{sheet, p.Class, p.Size, phrase.HTMLLang, phrase.Dir(), phrase.Before, phrase.Between, phrase.After, cfg.HyzisURL, cfg.AranduURL})
 	return template.HTML(b.String())
 }

@@ -148,3 +148,31 @@ func TestAnUnsignedLineTakesNoRoom(t *testing.T) {
 		t.Errorf("an unsigned line took %v", dims.Size)
 	}
 }
+
+// The native line reads the language of the screen, English when the old flag
+// is set, Portuguese otherwise, and an unknown language as English.
+func TestTheNativeLineReadsTheLanguageOfTheScreen(t *testing.T) {
+	for _, tc := range []struct {
+		options         Options
+		before, between string
+		rtl             bool
+	}{
+		{Options{}, "Desenvolvido por", "com", false},
+		{Options{English: true}, "Built by", "with", false},
+		{Options{Lang: "fr-CA"}, "Développé par", "avec", false},
+		{Options{Lang: "ar-EG"}, "تم التطوير بواسطة", "باستخدام", true},
+		{Options{Lang: "ko"}, "Built by", "with", false},
+		{Options{Lang: "pt", English: true}, "Desenvolvido por", "com", false},
+	} {
+		p := tc.options.phrase()
+		if p.Before != tc.before || p.Between != tc.between || p.RTL != tc.rtl {
+			t.Errorf("%+v read %q, %q (rtl %v); want %q, %q (rtl %v)", tc.options, p.Before, p.Between, p.RTL, tc.before, tc.between, tc.rtl)
+		}
+	}
+	if got := (Options{Lang: "de"}).phrase().Version; got != "Version" {
+		t.Errorf("German version label = %q", got)
+	}
+	if got := (Options{}).phrase().Version; got != "Versão" {
+		t.Errorf("Portuguese version label = %q", got)
+	}
+}

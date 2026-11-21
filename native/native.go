@@ -1,5 +1,5 @@
 // Package native is the signature for an Ayra app: the line "Desenvolvido por
-// [HYZIS] em [Arandu]" with each mark a link to its site, and the About screen
+// [HYZIS] com [Arandu]" with each mark a link to its site, and the About screen
 // it belongs on.
 //
 // It stands apart from the web half so that a web-only project links no native
@@ -20,6 +20,7 @@ import (
 	"image/color"
 	"image/draw"
 	"image/png"
+	"slices"
 	"strings"
 	"sync"
 	"time"
@@ -33,6 +34,7 @@ import (
 	"github.com/arandu-io/ayra/widget"
 
 	"github.com/hyz-is/arandu-signature/internal/licence"
+	"github.com/hyz-is/arandu-signature/internal/words"
 )
 
 // The official marks, rasterized at 96 px tall with a transparent background
@@ -56,7 +58,13 @@ type Options struct {
 	// Enabled is the contract: the line appears only on a product whose client
 	// agreed to the brand partnership. Zero draws nothing.
 	Enabled bool
-	// English reads "Built by … with …". Zero reads "Desenvolvido por … em …".
+	// Lang is the language tag of the screen, "fr", "pt-BR" or "ar-EG": the
+	// line reads in that language, right to left in Arabic. Empty falls to
+	// English when English is set and to Portuguese (Brazil) otherwise; a
+	// language the line has no words for is English.
+	Lang string
+	// English reads "Built by … with …" when Lang is empty. Zero reads
+	// "Desenvolvido por … com …".
 	English bool
 	// HyzisURL and AranduURL override where the marks link to. Empty is the
 	// default address of each.
@@ -96,11 +104,12 @@ func (o Options) signs() bool {
 	return o.Enabled
 }
 
-func (o Options) words() (by, with string) {
-	if o.English {
-		return "Built by", "with"
+// phrase is the sentence the line reads, from Lang or, without one, English.
+func (o Options) phrase() words.Phrase {
+	if o.Lang == "" && o.English {
+		return words.Lookup(words.English)
 	}
-	return "Desenvolvido por", "em"
+	return words.Lookup(o.Lang)
 }
 
 func (o Options) urls() (hyzis, arandu string) {
@@ -182,13 +191,13 @@ func Line(c ayra.Context, s *State, o Options) ayra.Dimensions {
 		open(aranduURL)
 	}
 
-	by, with := o.words()
+	phrase := o.phrase()
 	hyzisHeight, aranduHeight := o.heights()
 	ink := c.Theme.Colours.Foreground
 	ink.A = 0xBF
-	words := func(text string) layout.FlexChild {
+	text := func(content string) layout.FlexChild {
 		return layout.Rigid(func(gtx layout.Context) layout.Dimensions {
-			return widget.TextProps{Content: text, Role: widget.Caption, Tone: widget.Muted, MaxLines: 1}.Layout(c.With(gtx))
+			return widget.TextProps{Content: content, Role: widget.Caption, Tone: widget.Muted, MaxLines: 1}.Layout(c.With(gtx))
 		})
 	}
 	mark := func(click *widget.Clickable, name string, src []byte, height unit.Dp) layout.FlexChild {
@@ -206,12 +215,22 @@ func Line(c ayra.Context, s *State, o Options) ayra.Dimensions {
 			})
 		})
 	}
-	return layout.Flex{Alignment: layout.Middle}.Layout(c.Context,
-		words(by),
-		mark(&s.hyzis, "HYZIS", hyzisPNG, hyzisHeight),
-		words(with),
-		mark(&s.arandu, "Arandu", aranduPNG, aranduHeight),
-	)
+	var row []layout.FlexChild
+	if phrase.Before != "" {
+		row = append(row, text(phrase.Before))
+	}
+	row = append(row, mark(&s.hyzis, "HYZIS", hyzisPNG, hyzisHeight))
+	if phrase.Between != "" {
+		row = append(row, text(phrase.Between))
+	}
+	row = append(row, mark(&s.arandu, "Arandu", aranduPNG, aranduHeight))
+	if phrase.After != "" {
+		row = append(row, text(phrase.After))
+	}
+	if phrase.RTL {
+		slices.Reverse(row)
+	}
+	return layout.Flex{Alignment: layout.Middle}.Layout(c.Context, row...)
 }
 
 // AboutProps is the About screen of an app.
@@ -271,10 +290,7 @@ func About(c ayra.Context, s *State, p AboutProps) ayra.Dimensions {
 		children = append(children, text(widget.TextProps{Content: p.Name, Role: widget.Heading}))
 	}
 	if p.Version != "" {
-		version := "Versão " + p.Version
-		if p.Signature.English {
-			version = "Version " + p.Version
-		}
+		version := p.Signature.phrase().Version + " " + p.Version
 		children = append(children, gap(4), text(widget.TextProps{Content: version, Role: widget.Caption, Tone: widget.Muted}))
 	}
 	if p.Description != "" {

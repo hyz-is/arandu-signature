@@ -3,6 +3,8 @@ package signature
 import (
 	"fmt"
 	"net/url"
+
+	"github.com/hyz-is/arandu-signature/internal/words"
 )
 
 // The two addresses the marks link to.
@@ -11,13 +13,41 @@ const (
 	DefaultAranduURL = "https://arandu.io"
 )
 
-// The languages the words of the line come in.
+// The languages the words of the line come in. Each is the tag of a language
+// the line is written in; [Language] maps any page's tag to one of them.
 const (
-	// PortugueseBR reads "Desenvolvido por … em …", and is the default.
-	PortugueseBR = "pt-BR"
-	// English reads "Built by … with …".
-	English = "en"
+	// PortugueseBR reads "Desenvolvido por … com …", and is the default.
+	PortugueseBR = words.PortugueseBR
+	// English reads "Built by … with …", and is where an unknown language falls.
+	English = words.English
+	// French reads "Développé par … avec …".
+	French = "fr"
+	// Spanish reads "Desarrollado por … con …".
+	Spanish = "es"
+	// German reads "Entwickelt von … mit …".
+	German = "de"
+	// Italian reads "Sviluppato da … con …".
+	Italian = "it"
+	// Arabic reads right to left: the line is drawn with dir="rtl".
+	Arabic = "ar"
+	// Chinese is written in simplified characters ("zh-Hans").
+	Chinese = "zh"
+	// Japanese reads "… が … で開発".
+	Japanese = "ja"
+	// Russian reads "Разработано … на …".
+	Russian = "ru"
 )
+
+// Language maps the language tag of a page ("fr", "pt_BR", "zh-Hans-CN",
+// "ar-EG") to the language the line is drawn in. Case is ignored; Portuguese
+// of any region is [PortugueseBR]; a traditional Chinese tag (script Hant, or
+// region TW, HK or MO) is not supported, because the line is written in
+// simplified characters. An empty tag is [PortugueseBR], and a tag the line
+// has no words for is [English].
+func Language(tag string) string { return words.Resolve(tag) }
+
+// Languages lists the languages the line is written in.
+func Languages() []string { return words.Tags() }
 
 // Config is how a project signs.
 //
@@ -27,7 +57,9 @@ const (
 type Config struct {
 	// Enabled turns the signature on. Zero is off.
 	Enabled bool
-	// Lang is PortugueseBR or English. Empty is PortugueseBR.
+	// Lang is a language tag, such as a page's: see [Language]. Empty is
+	// PortugueseBR and a tag the line has no words for is English. A tag that
+	// is not shaped like a BCP 47 tag is refused by Validate.
 	Lang string
 	// HyzisURL and AranduURL are where the marks link to. Empty is the
 	// default address of each; a value is refused unless it is an absolute
@@ -52,8 +84,8 @@ type Config struct {
 
 // Validate refuses a configuration that would render a broken or unsafe link.
 func (c Config) Validate() error {
-	if c.Lang != "" && c.Lang != PortugueseBR && c.Lang != English {
-		return fmt.Errorf("signature: Config.Lang is %q, and has to be %q or %q", c.Lang, PortugueseBR, English)
+	if c.Lang != "" && !words.WellFormed(c.Lang) {
+		return fmt.Errorf("signature: Config.Lang is %q, and has to be a language tag such as %q or %q", c.Lang, PortugueseBR, English)
 	}
 	for name, address := range map[string]string{"HyzisURL": c.HyzisURL, "AranduURL": c.AranduURL} {
 		if address == "" {
@@ -80,10 +112,19 @@ func (c Config) withDefaults() Config {
 	return c
 }
 
-// Words are the two pieces of text around the marks, in the language asked.
+// Words are the two pieces of text between the marks, in the language asked:
+// before the HYZIS mark and before the Arandu mark. A language whose sentence
+// ends after the second mark (Chinese, Japanese) has a third piece that Words
+// does not carry; [Sentence] has all three.
 func Words(lang string) (by, with string) {
-	if lang == English {
-		return "Built by", "with"
-	}
-	return "Desenvolvido por", "em"
+	p := words.Lookup(lang)
+	return p.Before, p.Between
 }
+
+// Phrase is the sentence around the two marks in one language.
+type Phrase = words.Phrase
+
+// Sentence answers the whole sentence for a language tag, as [Language]
+// reads it: the text before, between and after the marks, whether the language
+// is written right to left, and the tag for a lang attribute.
+func Sentence(lang string) Phrase { return words.Lookup(lang) }

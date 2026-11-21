@@ -27,7 +27,8 @@ func TestTheLineIsTheFamilySignature(t *testing.T) {
 	html := string(signature.Kyse(signature.Props{Enabled: true, Class: "footer-credit"}))
 	for _, want := range []string{
 		`<span>Desenvolvido por</span>`,
-		`<span>em</span>`,
+		`<span>com</span>`,
+		`dir="ltr"`,
 		`href="https://hyz.is" aria-label="HYZIS"`,
 		`href="https://arandu.io" aria-label="Arandu"`,
 		`class="arandu-signature footer-credit"`,
@@ -71,9 +72,9 @@ func TestTheConfigurationRefusesWhatCannotWork(t *testing.T) {
 	t.Parallel()
 
 	for name, cfg := range map[string]signature.Config{
-		"unknown language": {Lang: "fr"},
-		"plain http":       {HyzisURL: "http://hyz.is"},
-		"relative address": {AranduURL: "/arandu"},
+		"malformed language": {Lang: "not a tag!"},
+		"plain http":         {HyzisURL: "http://hyz.is"},
+		"relative address":   {AranduURL: "/arandu"},
 	} {
 		if _, err := signature.New(cfg); err == nil {
 			t.Errorf("%s: New accepted %+v", name, cfg)

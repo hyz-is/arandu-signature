@@ -10,6 +10,33 @@ a release is corrected by another release and never by moving a tag.
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-11-21
+
+### Added
+
+- The line speaks ten languages: French, English, Spanish, Portuguese (Brazil),
+  German, Italian, Arabic, Chinese (simplified), Japanese and Russian. The
+  constants `French`, `Spanish`, `German`, `Italian`, `Arabic`, `Chinese`,
+  `Japanese` and `Russian` join `PortugueseBR` and `English`.
+- `Language(tag)` maps a page's BCP 47 tag (`fr-CA`, `pt_BR`, `zh-Hans-CN`) to
+  the language drawn; `Languages()` lists them; `Sentence(tag)` answers the
+  text before, between and after the marks, with `RTL` and the `lang` tag.
+- Arabic is drawn right to left (`dir="rtl"`) in the page, the e-mail table and
+  the native widget. Every rendering carries a `dir` attribute.
+- `native.Options.Lang` takes the screen's language tag; the About screen's
+  "Version" label follows it.
+
+### Changed
+
+- Portuguese reads "Desenvolvido por … com …": the second word was "em".
+- `Config.Lang`, `Props.Lang` and `EmailProps.Lang` take any language tag. A
+  language the line has no words for, and traditional Chinese, is English, and
+  `New` refuses only a tag that is not shaped like a BCP 47 tag. It used to
+  refuse everything but `pt-BR` and `en`.
+- A language with a closing word (Chinese, Japanese) draws it after the Arandu
+  mark, and a piece of text that is empty draws no element.
+- The `lang` attribute of the Chinese line is `zh-Hans`.
+
 ## [0.5.2] - 2026-11-19
 
 ### Changed

@@ -1,7 +1,7 @@
 # Arandu Signature
 
 The line HYZIS signs the products it develops with, under the brand
-partnership: **"Desenvolvido por [HYZIS] em [Arandu]"**, each mark a link to its
+partnership: **"Desenvolvido por [HYZIS] com [Arandu]"**, each mark a link to its
 site (https://hyz.is, https://arandu.io), drawn in the ink of the screen around
 it. One module for both halves of an [Arandu](https://arandu.io) product:
 
@@ -60,8 +60,40 @@ Then draw the line where the footer ends, in the layout:
 or hand the module's `sig.HTML()` to the layout's data. The line brings its own
 stylesheet and the two marks as view assets served from the origin, so the
 layout adds nothing else and a strict Content-Security-Policy holds: no inline
-style, no script. `Lang: signature.English` reads "Built by … with …";
-`HyzisURL` and `AranduURL` take another https address.
+style, no script. `HyzisURL` and `AranduURL` take another https address.
+
+## Languages
+
+The sentence comes in ten languages, each with its own word order:
+
+| Tag | Reads |
+| --- | --- |
+| `fr` | Développé par HYZIS avec Arandu |
+| `en` | Built by HYZIS with Arandu |
+| `es` | Desarrollado por HYZIS con Arandu |
+| `pt-BR` | Desenvolvido por HYZIS com Arandu |
+| `de` | Entwickelt von HYZIS mit Arandu |
+| `it` | Sviluppato da HYZIS con Arandu |
+| `ar` | تم التطوير بواسطة HYZIS باستخدام Arandu (drawn right to left) |
+| `zh` | 由 HYZIS 使用 Arandu 开发 (simplified characters, `lang="zh-Hans"`) |
+| `ja` | HYZIS が Arandu で開発 |
+| `ru` | Разработано HYZIS на Arandu |
+
+Pass the page's own tag as `Lang`: `signature.Kyse(signature.Props{Enabled: true, Lang: pageLang})`.
+`signature.Language(tag)` is the mapping it applies, and it is the one to call
+when you need the answer yourself: case is ignored, `_` counts as `-`, a region
+is dropped (`fr-CA` is `fr`, `pt-PT` is `pt-BR`), and an empty tag is `pt-BR`.
+A language the line has no words for is `en`, and so is traditional Chinese
+(`zh-Hant`, `zh-TW`, `zh-HK`, `zh-MO`), because the line is written in
+simplified characters. `signature.Languages()` lists the ten, and
+`signature.Sentence(tag)` answers the text before, between and after the marks,
+with `RTL` and the tag for a `lang` attribute. `signature.Words(tag)` keeps
+answering the first two pieces. The constants are `signature.French`,
+`English`, `Spanish`, `PortugueseBR`, `German`, `Italian`, `Arabic`, `Chinese`,
+`Japanese` and `Russian`.
+
+The line carries `lang` and `dir`: Arabic gets `dir="rtl"`, so the row reads
+from the right, in the page and in the e-mail table.
 
 ## E-mail: a letter's foot
 
@@ -93,12 +125,12 @@ css += signature.EmailStyle()
   letter, which is complete. Gmail, which inverts a light letter by itself and
   leaves images alone, shows the light marks on its inverted card.
 - **Narrow screens.** Under 620 px the four cells (`Desenvolvido por`, HYZIS,
-  `em`, Arandu) stack, one under the other, centred.
+  `com`, Arandu) stack, one under the other, centred.
 - **Fixed size.** HYZIS is 19x22 and Arandu 22x20 CSS pixels, written as
   `width` and `height` attributes, from PNGs of three times the size; each
   image carries its name as alternative text, inside a link to its site.
 - **Plain text.** `signature.EmailText(props)` is the line for the text part:
-  `Desenvolvido por HYZIS (https://hyz.is) em Arandu (https://arandu.io)`.
+  `Desenvolvido por HYZIS (https://hyz.is) com Arandu (https://arandu.io)`.
 - `Left: true` aligns the table with the text above it instead of centring it;
   the `Lang`, `HyzisURL`, `AranduURL` and licence rules of the web line hold.
 

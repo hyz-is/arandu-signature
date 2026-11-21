@@ -2,6 +2,24 @@
 
 ## Unreleased
 
+## v0.6.0
+
+Nothing that compiled stops compiling. `signature.English` and
+`signature.PortugueseBR` still work, and `Words(lang)` still answers two
+strings. Three things read differently:
+
+- Portuguese is "Desenvolvido por … com …"; it was "… em …". A test that
+  asserts the old word has to change.
+- `Lang` accepts any tag. Pass the page's own (`Lang: pageLang`) instead of a
+  constant chosen at boot; an unknown language draws English. `New` used to
+  refuse `"fr"`, and now it draws French.
+- Every rendering of the line has a `dir` attribute, and the e-mail table
+  too. A test that compares the exact markup of the line has to take it in.
+
+A native app sets `Options.Lang` with the page's tag; `English: true` keeps
+working when `Lang` is empty. The golden pictures of the native line changed
+with the word.
+
 ## v0.5.2
 
 Nothing to change in code. Name the file that holds the licence

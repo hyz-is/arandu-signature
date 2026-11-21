@@ -60,7 +60,7 @@ func TestTheEmailLineIsTheFamilySignatureInATable(t *testing.T) {
 		`data-arandu-signature-mail`,
 		`lang="pt-BR"`,
 		`>Desenvolvido por</td>`,
-		`>em</td>`,
+		`>com</td>`,
 		`href="https://hyz.is" title="HYZIS"`,
 		`href="https://arandu.io" title="Arandu"`,
 		`alt="HYZIS"`,
@@ -123,7 +123,7 @@ func TestTheEmailLineSpeaksEnglishAlignsLeftAndLinksElsewhere(t *testing.T) {
 func TestTheEmailTextNamesBothSites(t *testing.T) {
 	t.Parallel()
 
-	if got, want := signature.EmailText(signature.EmailProps{Enabled: true}), "Desenvolvido por HYZIS (https://hyz.is) em Arandu (https://arandu.io)"; got != want {
+	if got, want := signature.EmailText(signature.EmailProps{Enabled: true}), "Desenvolvido por HYZIS (https://hyz.is) com Arandu (https://arandu.io)"; got != want {
 		t.Errorf("text = %q, want %q", got, want)
 	}
 	if got, want := signature.EmailText(signature.EmailProps{Enabled: true, Lang: signature.English}), "Built by HYZIS (https://hyz.is) with Arandu (https://arandu.io)"; got != want {
